@@ -1,0 +1,268 @@
+// this is a telegram memobot to maintain your memo items on the go
+// developed by KH ( github name WingsMaker )
+// it uses googlesheet to store rows of memo items
+// a memo item is a block text stored into google sheet as a row of cells
+// the memo key is at column A and the memo content is at column B
+var dtable = [];
+
+// To make the code shorter, use the code library ( created  by KH )
+// use this google app script editor page, find the "Libraries +" option on the left
+// Click on the +  and find the text box prompt for "Script ID *"
+// Enter this value "1XH9ezlLoC939C4Xgkl-1sBSh8JXDlSYwiDMBeutpTk9GXBqI3K9dBBxK"
+// Click "Look up" and then click the blue button "Add" 
+var telegramUrl = "https://api.telegram.org/bot" + token;
+
+// enter your own teleram bot token
+var token = "....";
+
+// enter your own telegram chat_id
+var ownerid = "....";
+
+// where to get the sheetid ?
+// create a googlesheet and get the hyperlink/URL from the browser
+// remove the prefix "https://docs.google.com/spreadsheets/d/" and the reminding string is the sheetid
+// what to do with this sheet ?
+// rename the worksheet (tab) name as "memo"
+// format the sheet as a 2 columns table, no need title row
+// add first row with A1 = "#webhook" and B1 = webhook_id
+// that's it about the sheetid
+// no need to rename the googlesheet filename, its optional
+var sheetid = ".....";
+
+// where to get the webhook_id ?
+// when you google app script compiled as web app, it has a hyperlink URL
+// use this google app script editor page, find the blue [Deploy] button
+// use the path to find the url :  "deploy -> manage deployments > web app URL"
+// the URL in the format https://script.google.com/macros/s/...../exec
+// by removing "https://script.google.com/macros/s/" and "/exec"
+// the long string is the webhook_id
+// enter this value into the cell B1 next to cell A1 having "#webhook"
+
+// to stop the telegram bot from running
+function RemoveWebhook() {
+  var txt = codelib.RemoveWebhook(token);
+  Logger.log(txt);
+}
+
+// to start the telegram bot based on the webhook defined inside the googlesheet
+function setWebhook() {
+  get_memo();
+  var weburi = item_lookup( "#webhook" );
+  var txt = codelib.setWebhook(token,weburi);
+  Logger.log(txt);
+}
+
+function doPost(e) {
+  var contents = JSON.parse(e.postData.contents);
+  var txt = "";  
+  get_memo();
+  if (contents.callback_query) {
+      var id_callback = contents.callback_query.from.id;
+      var data = contents.callback_query.data;
+      if( data.startsWith("/a") ) {
+        txt = data.replace( "/a", "");
+        txt = txt.trim();
+        var cnt = parseInt(txt);
+        extract_list(id_callback, cnt, 1);
+        return "extraction list for view"; 
+      }
+      if( data.startsWith("/b") ) {
+        txt = data.replace( "/b", "");
+        txt = txt.trim();
+        var cnt = parseInt(txt);
+        extract_list(id_callback, cnt, 2);
+        return "extraction list for edit"; 
+      }
+      if( data.startsWith("/d") ) {
+        txt = data.replace( "/d", "");
+        txt = txt.trim();
+        var cnt = parseInt(txt);
+        extract_list(id_callback, cnt, 0);
+        return "extraction list for deletion"; 
+      }
+      if( data.startsWith("/v") ) {
+        summary_list(id_callback,1);
+        return "summary list for viewing";
+      }
+      if( data.startsWith("/w") ) {
+        summary_list(id_callback,0);
+        return "summary list for deletion";
+      }
+      if( data.startsWith("/x") ) {
+        txt = data.replace( "/x", "");
+        txt = txt.trim();
+        var cnt = parseInt(txt);
+        txt = element_index(cnt);
+        txt = delete_entry(txt);
+        sendMessage(id_callback, "item deleted.");
+      }
+      if( data.startsWith("/y") ) {
+        txt = data.replace( "/y", "");
+        txt = txt.trim();
+        var cnt = parseInt(txt);
+        var hdr = element_index(cnt);  
+        txt = get_info(hdr)
+        sendMessage(id_callback, txt);
+        txt = "Send me back the edited version based on above message:";
+        sendMessage(id_callback, txt);
+        txt = "/+#info\n/add";
+        update_entry(txt);
+        return;
+      }
+      if (txt.length > 0) {
+        Utilities.sleep(200);
+        sendMessage(id_callback, txt);
+        return txt;
+      }
+  } else if (contents.message) {
+    var id = contents.message.from.id;
+    var text = contents.message.text;
+    if ( id == ownerid ) {      
+      var info = item_lookup("#info");
+      if( text.includes("/start") ) {
+        txt = "Welcome back , " + contents.message.from.first_name + "!\nCommands:\n";
+        txt = txt + "+\nAdd an item\n-\nDelete an item from the list\n!\nEdit an item from the list\n?\nList all items\n\n";
+        txt = txt + "Or you can type any keywords to find the item directly."
+        sendMessage(id, txt);
+        return "/start";
+      }
+      if ( text == "?" ) {
+        summary_list(id,1);
+        return "summary list for viewing";
+      }
+      if ( text == "!" ) {
+        summary_list(id, 2);
+        return "summary list for editing";
+      }
+      if ( text == "+" ) {
+        txt = "Enter title on the 1st line and the content from the 2nd line onwards";
+        sendMessage(id, txt);
+        txt = "/+#info\n/add";
+        update_entry(txt);
+        return "add";
+      }
+      if ( text == "-" ) {
+        summary_list(id,0);
+        return "summary list for deletion";
+      }
+      if (info == "/start") {
+        if ( text == "?" ) {
+          summary_list(id,1);
+          return "summary list for viewing";
+        }
+        if ( text == "!" ) {
+          summary_list(id, 2);
+          return "summary list for editing";
+        }
+        if ( text == "+" ) {
+          txt = "Enter title on the 1st line and the content from the 2nd line onwards";
+          sendMessage(id, txt);
+          txt = "/+#info\n/add";
+          update_entry(txt);
+          return "add";
+        }
+        if ( text == "-" ) {
+          summary_list(id,0);
+          return "summary list for deletion";
+        }
+        txt = text.trim();
+        if ( txt.length > 0 ) {
+          search_list( id, txt );
+        }
+        return "find";
+      }
+      if (info == "/add") {
+        txt = "/+" + text;
+        update_entry(txt);
+        Utilities.sleep(200);
+        txt = "/+#info\n/start";
+        update_entry(txt);
+        txt = "Entry updated.";
+        sendMessage(id, txt);
+        return "/add";
+      }
+    } else {
+      if( text.startsWith("/?") == true ) {
+        txt = "Hi" + contents.message.from.first_name + ", ";
+        txt = txt + "your telegram chat_id is : " + id;
+      } else {
+        txt = "Sorry, this is for the owner of this bot only.";
+      }
+    }
+    if (txt.length > 0) {
+      Utilities.sleep(200);
+      sendMessage(id, txt);
+      return txt;
+    }
+  }
+}
+
+function sendMessage(id, msg) {
+  codelib.sendMessage(token, id, msg);
+}
+
+function sendText(chatId, text, keyBoard) {
+  codelib.sendText( token, chatId, text, keyBoard );
+}
+
+function sendKeyboard(chatId, choices, text = 'Menu') {
+  codelib.sendKeyboard( token, chatId, choices, text );
+}
+
+function extract_msg(txt) {
+  return codelib.extract_msg(txt);
+}
+
+function get_memo() {
+  dtable = codelib.read_table( sheetid , "memo" )  
+}
+
+function delete_item( dkey ) {
+  codelib.delete_item( sheetid, "memo", dtable, dkey );
+}
+
+function element_index( idx ) {
+  txt = codelib.element_index( dtable, idx );
+  return txt;
+}
+
+function item_lookup( key ) {
+  var txt = codelib.item_lookup(dtable, key);
+  return txt;
+}
+
+function get_info( keywords ) {  
+  var txt = "";    
+  txt = codelib.get_info( dtable , "", keywords );
+  return txt;
+}
+
+function delete_entry(txt) {
+    codelib.delete_entry( sheetid, "memo", dtable , txt );
+}
+
+function find_entry(txt) {
+  var txt = codelib.find_entry( dtable , "" , txt);
+  return txt;
+}
+
+function update_entry(txt) {
+  codelib.update_entry( sheetid , "memo", "", dtable, txt);
+}
+
+function add_memo(dkey,dcontent) {
+  codelib.add_memo( sheetid , "memo", "", dkey, dcontent );
+}
+
+function search_list( id, keyword ) {
+  codelib.search_list( token, id, dtable, keyword )
+}
+
+function extract_list( id, grp, viewmode ) {  
+  codelib.extract_list( token, id, dtable, grp, viewmode );
+}
+
+function summary_list(id, viewmode) {
+  codelib.summary_list( token, id, dtable, viewmode);
+}
+
