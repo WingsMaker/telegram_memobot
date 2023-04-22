@@ -118,6 +118,7 @@ What's next:
 
 Enter this value into the cell B1 next to cell A1 having "#webhook"
 
+![image](https://user-images.githubusercontent.com/32192638/233791978-fe3a619c-1fae-41f8-859a-d93ef6e24917.png)
 
 
 [10] Run the "setWebhook" function for only once to make sure actual telegram bot 
