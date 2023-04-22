@@ -44,9 +44,9 @@ var token = "....";
 
 To make the code shorter, use the "codelib" library. 
 
-![image](https://user-images.githubusercontent.com/32192638/233791136-b16c60af-624f-4180-b3c4-c3742b39c357.png)
-
 Use this google app script editor page, find the "Libraries +" option on the left
+
+![image](https://user-images.githubusercontent.com/32192638/233791136-b16c60af-624f-4180-b3c4-c3742b39c357.png)
 
 Click on the +  and find the text box prompt for "Script ID *"
 
@@ -58,13 +58,18 @@ Enter this value "1XH9ezlLoC939C4Xgkl-1sBSh8JXDlSYwiDMBeutpTk9GXBqI3K9dBBxK"
 
 Click "Look up" and then click the blue button "Add" 
 
+
 [7] Update the values of sheetid in the script using google sheet url.
+
+![image](https://user-images.githubusercontent.com/32192638/233791641-d1d3339e-ec0a-479b-afbc-48b8db21d31e.png)
+
 Where to get the sheetid ?
 - Create a googlesheet and get the hyperlink/URL from the browser
-- Remove the prefix "https://docs.google.com/spreadsheets/d/" and the reminding string is the sheetid
+- Remove the prefix "https://docs.google.com/spreadsheets/d/" and the suffix "/edit...",  the reminding string is the sheetid.
 
 
 What to do with this sheet ?
+
 - Rename the worksheet (tab) name as "memo"
 - Format the sheet as a 2 columns table, no need title row
 - Add first row with A1 = "#webhook" and B1 = webhook_id ( see [9] for webhook_id )
@@ -77,7 +82,9 @@ var sheetid = ".....";
 [8] Deploy as google web app
 
 In the Google App Script project, go to "Publish" in the top navigation bar. 
+
 Under "Deploy as web app", select "Deploy". This will open a pop-up window. 
+
 Your web app URL will be listed in the "Current web app URL" field.
 
 Click on the "Deploy - New Deployment"
