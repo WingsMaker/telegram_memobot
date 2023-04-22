@@ -43,9 +43,19 @@ var token = "....";
 [6] Add the codelib library using the script ID given.
 
 To make the code shorter, use the "codelib" library. 
-use this google app script editor page, find the "Libraries +" option on the left
+
+![image](https://user-images.githubusercontent.com/32192638/233791136-b16c60af-624f-4180-b3c4-c3742b39c357.png)
+
+Use this google app script editor page, find the "Libraries +" option on the left
+
 Click on the +  and find the text box prompt for "Script ID *"
+
+![image](https://user-images.githubusercontent.com/32192638/233791197-98492977-bfe9-4e6e-bd86-2ab6014c056f.png)
+
 Enter this value "1XH9ezlLoC939C4Xgkl-1sBSh8JXDlSYwiDMBeutpTk9GXBqI3K9dBBxK"
+
+![image](https://user-images.githubusercontent.com/32192638/233791243-5ec1a99f-774b-4594-9ab9-b78e4d26ec85.png)
+
 Click "Look up" and then click the blue button "Add" 
 
 [7] Update the values of sheetid in the script using google sheet url.
@@ -87,26 +97,21 @@ Copy the web app url to the clipboard for later use.
 
 [9] Where to get the webhook_id ?
 
-When you google app script compiled as web app, it has a hyperlink URL
+When you google app script compiled as web app, it has a hyperlink URL.
+
 Use this google app script editor page, find the blue [Deploy] button
+
 Use the path to find the url :  "deploy -> manage deployments > web app URL"
+
 The URL in the format https://script.google.com/macros/s/...../exec
+
 By removing "https://script.google.com/macros/s/" and "/exec" , the long string is the webhook_id.
 
 What's next:
+
 Enter this value into the cell B1 next to cell A1 having "#webhook"
 
 
-[7] Update the values of FOLDER_NAME in the script.
-
-If your ebooks in located at the "eBooks" folder in the google drive, leave it alone.
-Otherwise, update the value of FOLDER_NAME.
-
-var FOLDER_NAME = "eBooks"; // assuming there is a folder called eBooks in your google drive.
-
-[8] Save the script and REDO the deployment process in step 4 
-
-since the code has been changed, need to udpate the value of webhook in [7].
 
 [10] Run the "setWebhook" function for only once to make sure actual telegram bot 
 able to callback this google web app.
