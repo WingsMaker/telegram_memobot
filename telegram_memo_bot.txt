@@ -52,6 +52,11 @@ function setWebhook() {
   Logger.log(txt);
 }
 
+function WebhookInfo() {
+  var txt = codelib.WebhookInfo(token);
+  Logger.log(txt);
+}
+
 function doPost(e) {
   var contents = JSON.parse(e.postData.contents);
   var txt = "";  
@@ -109,6 +114,13 @@ function doPost(e) {
         update_entry(txt);
         return;
       }
+      if( data.startsWith("/z") ) {
+        txt = data.replace( "/z", "");
+        txt = txt.trim();
+        var cnt = parseInt(txt);
+        txt = element_index(cnt);  
+        txt = find_entry(txt);
+      }
       if (txt.length > 0) {
         Utilities.sleep(200);
         sendMessage(id_callback, txt);
@@ -117,59 +129,124 @@ function doPost(e) {
   } else if (contents.message) {
     var id = contents.message.from.id;
     var text = contents.message.text;
-    if ( id == ownerid ) {      
+    var cid = id + ",";    
+    var id_list = item_lookup( "#chat_ids" );
+    if ( id_list.includes(cid) ) {
       var info = item_lookup("#info");
       if( text.includes("/start") ) {
-        txt = "Welcome back , " + contents.message.from.first_name + "!\nCommands:\n";
-        txt = txt + "+\nAdd an item\n-\nDelete an item from the list\n!\nEdit an item from the list\n?\nList all items\n\n";
-        txt = txt + "Or you can type any keywords to find the item directly."
+        txt = "Welcome back , " + contents.message.from.first_name + "!";
         sendMessage(id, txt);
+        show_menu();
+        txt = "/+#info\n/start";
+        update_entry(txt);
         return "/start";
       }
-      if ( text == "?" ) {
+      if( text.startsWith("/cal") ) {
+        txt = text.replace("/cal","");
+        txt = codelib.get_calendar(txt);
+        sendMessage(id, txt);
+        return "calendar for current month";
+      }
+      if ( text == "/info" ) {
         summary_list(id,1);
         return "summary list for viewing";
       }
-      if ( text == "!" ) {
+      if ( text == "/edit" ) {
         summary_list(id, 2);
         return "summary list for editing";
       }
-      if ( text == "+" ) {
+      if ( text == "/add" ) {
         txt = "Enter title on the 1st line and the content from the 2nd line onwards";
         sendMessage(id, txt);
         txt = "/+#info\n/add";
         update_entry(txt);
-        return "add";
+        return "/add";
       }
-      if ( text == "-" ) {
+      if ( text == "/delete" ) {
         summary_list(id,0);
         return "summary list for deletion";
       }
+      if ( text == "/find" ) {
+        txt = "Items having the words :";
+        sendMessage(id, txt);
+        txt = "/+#info\n/find";
+        update_entry(txt);
+        return "/find";
+      }
+      if( text.startsWith("/cal") ) {
+        txt = text.replace("/cal","");
+        txt = codelib.get_calendar(txt);
+        sendMessage(id, txt);
+        return "/cal";
+      }
+      if( text.startsWith("/rate") ) {
+        txt = text.replace("/rate","").trim();
+        txt = "/+#rate_" + id + "\n/rate";
+        update_entry(txt);
+        txt = "Exchange rate updated.";
+        sendMessage(id, txt);
+        return "/rate";
+      }
+      if( text.startsWith("/sgd") ) {
+        txt = text.replace("/sgd","").trim();
+        var curr_rate = parseFloat(item_lookup( "#rate" ));        
+        var local_amt = parseFloat(txt);
+        var calculate_amt = local_amt * curr_rate; // convert to sgd
+        txt = calculate_amt.toString();
+        txt = "VN$ " + local_amt.toString() + " = S$ " + txt;
+        sendMessage(id, txt);
+        return "convert to sgd";
+      }
+      if( text.startsWith("/vnd") ) {
+        txt = text.replace("/vnd","").trim();
+        var curr_rate = parseFloat(item_lookup( "#rate" ));        
+        var local_amt = parseFloat(txt);
+        var calculate_amt = local_amt / curr_rate; // convert to vnd
+        txt = calculate_amt.toString();
+        txt = "S$ " + local_amt.toString() + " = VN$ " + txt;
+        sendMessage(id, txt);
+        return "convert to vnd";
+      }
       if (info == "/start") {
-        if ( text == "?" ) {
+        if ( text == "View" ) {
           summary_list(id,1);
           return "summary list for viewing";
         }
-        if ( text == "!" ) {
+        if ( text == "Edit" ) {
           summary_list(id, 2);
           return "summary list for editing";
         }
-        if ( text == "+" ) {
+        if ( text == "Add" ) {
           txt = "Enter title on the 1st line and the content from the 2nd line onwards";
           sendMessage(id, txt);
           txt = "/+#info\n/add";
           update_entry(txt);
-          return "add";
+          return "/add";
         }
-        if ( text == "-" ) {
+        if ( text == "Delete" ) {
           summary_list(id,0);
           return "summary list for deletion";
         }
-        txt = text.trim();
-        if ( txt.length > 0 ) {
-          search_list( id, txt );
+        if ( text == "Find" ) {
+          txt = "Items having the words :";
+          sendMessage(id, txt);
+          txt = "/+#info\n/find";
+          update_entry(txt);
+          return "/find";
         }
-        return "find";
+        if ( text == "Calendar" ) {
+          txt = codelib.get_calendar("");
+          sendMessage(id, txt);
+          return "/cal";
+        }
+        if ( text == "S$" ) {
+          txt = "Example:\nThis command defines 1 VN$ = S$0.000056\n/rate 0.000056\n";
+          txt = txt + "How much is 75000 VN$ in S$?\n/sgd 75000\n";
+          txt = txt + "How much is $11.85 in VN$ ?\n/vnd 11.85";
+          sendMessage(id, txt);
+          return "/vnd";
+        }
+        return "none";
       }
       if (info == "/add") {
         txt = "/+" + text;
@@ -178,8 +255,15 @@ function doPost(e) {
         txt = "/+#info\n/start";
         update_entry(txt);
         txt = "Entry updated.";
-        sendMessage(id, txt);
-        return "/add";
+      }
+      if (info == "/find") {
+        txt = text.trim();
+        if ( txt.length > 0 ) {
+          search_list( id, txt );
+        }
+        txt = "/+#info\n/start";
+        update_entry(txt);
+        return "Search by prefix";
       }
     } else {
       if( text.startsWith("/?") == true ) {
@@ -197,6 +281,11 @@ function doPost(e) {
   }
 }
 
+function show_menu(chatId) {
+  var choices=["View","Edit","Add","Delete","Find", "S$"];
+  sendKeyboard( ownerid, choices, text = 'Select one :') ;  
+}
+
 function sendMessage(id, msg) {
   codelib.sendMessage(token, id, msg);
 }
@@ -204,9 +293,13 @@ function sendMessage(id, msg) {
 function sendText(chatId, text, keyBoard) {
   codelib.sendText( token, chatId, text, keyBoard );
 }
-
 function sendKeyboard(chatId, choices, text = 'Menu') {
   codelib.sendKeyboard( token, chatId, choices, text );
+}
+
+function get_webappuri() {
+  get_memo();
+  return item_lookup( "#webhook" );
 }
 
 function extract_msg(txt) {
