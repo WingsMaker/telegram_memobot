@@ -129,9 +129,7 @@ function doPost(e) {
   } else if (contents.message) {
     var id = contents.message.from.id;
     var text = contents.message.text;
-    var cid = id + ",";    
-    var id_list = item_lookup( "#chat_ids" );
-    if ( id_list.includes(cid) ) {
+    if ( ownerid == id ) {
       var info = item_lookup("#info");
       if( text.includes("/start") ) {
         txt = "Welcome back , " + contents.message.from.first_name + "!";
