@@ -58,6 +58,11 @@ Enter this value "1XH9ezlLoC939C4Xgkl-1sBSh8JXDlSYwiDMBeutpTk9GXBqI3K9dBBxK"
 
 Click "Look up" and then click the blue button "Add" 
 
+Unable to add codelib due to authorization ?
+
+Just create your own "codelib" google app script using below :
+
+https://github.com/WingsMaker/keymgr/blob/main/codelib.txt
 
 [7] Update the values of sheetid in the script using google sheet url.
 
