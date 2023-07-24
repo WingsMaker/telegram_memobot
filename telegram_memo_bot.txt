@@ -177,34 +177,6 @@ function doPost(e) {
         sendMessage(id, txt);
         return "/cal";
       }
-      if( text.startsWith("/rate") ) {
-        txt = text.replace("/rate","").trim();
-        txt = "/+#rate_" + id + "\n/rate";
-        update_entry(txt);
-        txt = "Exchange rate updated.";
-        sendMessage(id, txt);
-        return "/rate";
-      }
-      if( text.startsWith("/sgd") ) {
-        txt = text.replace("/sgd","").trim();
-        var curr_rate = parseFloat(item_lookup( "#rate" ));        
-        var local_amt = parseFloat(txt);
-        var calculate_amt = local_amt * curr_rate; // convert to sgd
-        txt = calculate_amt.toString();
-        txt = "VN$ " + local_amt.toString() + " = S$ " + txt;
-        sendMessage(id, txt);
-        return "convert to sgd";
-      }
-      if( text.startsWith("/vnd") ) {
-        txt = text.replace("/vnd","").trim();
-        var curr_rate = parseFloat(item_lookup( "#rate" ));        
-        var local_amt = parseFloat(txt);
-        var calculate_amt = local_amt / curr_rate; // convert to vnd
-        txt = calculate_amt.toString();
-        txt = "S$ " + local_amt.toString() + " = VN$ " + txt;
-        sendMessage(id, txt);
-        return "convert to vnd";
-      }
       if (info == "/start") {
         if ( text == "View" ) {
           summary_list(id,1);
@@ -236,13 +208,6 @@ function doPost(e) {
           txt = codelib.get_calendar("");
           sendMessage(id, txt);
           return "/cal";
-        }
-        if ( text == "S$" ) {
-          txt = "Example:\nThis command defines 1 VN$ = S$0.000056\n/rate 0.000056\n";
-          txt = txt + "How much is 75000 VN$ in S$?\n/sgd 75000\n";
-          txt = txt + "How much is $11.85 in VN$ ?\n/vnd 11.85";
-          sendMessage(id, txt);
-          return "/vnd";
         }
         return "none";
       }
